@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Photos
 
 class ImageCollectionViewCell: UICollectionViewCell {
 
@@ -15,7 +16,26 @@ class ImageCollectionViewCell: UICollectionViewCell {
         // Initialization code
     }
 
-    func configure(image: UIImage?) {
-        imageView.image = image
+    func configure(asset: PHAsset?) {
+        guard let asset = asset else { return }
+
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .opportunistic
+        options.isSynchronous = false
+        options.isNetworkAccessAllowed = true
+
+        PHImageManager.default().requestImage(for: asset, targetSize: CGSize(width: 320, height: 320), contentMode: .aspectFit, options: options) { [weak self] image, _ in
+            guard let self = self,
+                  let image = image else { return }
+
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+
+                self.imageView.image = image
+            }
+
+        }
     }
 }

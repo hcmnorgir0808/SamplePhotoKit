@@ -12,7 +12,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var indicator: UIActivityIndicatorView!
     @IBOutlet weak var collectionView: UICollectionView!
 
-    private var images = [Image]()
+    private var assets = [PHAsset]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -51,21 +51,33 @@ class ViewController: UIViewController {
                 let fetchOptions = PHFetchOptions()
                 fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
                 let options = PHImageRequestOptions()
-                options.deliveryMode = .highQualityFormat
-                options.isSynchronous = true
+                options.deliveryMode = .opportunistic
+                options.isSynchronous = false
+                options.isNetworkAccessAllowed = true
                 let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
 
                 fetchResult.enumerateObjects({ (asset, index, stop) in
 
                     // PHAsset -> UIImageへの変換
-                    PHImageManager.default().requestImage(for: asset, targetSize: CGSize(width: 320, height: 320), contentMode: .aspectFit, options: options) { [weak self] image, _ in
-                        guard let self = self,
-                            let image = image else { return }
-
-                        let imageObject = Image(index: index, image: image)
-                        self.images.append(imageObject)
-                    }
+//                    PHImageManager.default().requestImage(for: asset, targetSize: CGSize(width: 320, height: 320), contentMode: .aspectFit, options: options) { [weak self] image, _ in
+//                        guard let self = self,
+//                            let image = image else { return }
+//
+//                        DispatchQueue.main.async { [weak self] in
+//                            guard let self = self else { return }
+//                            self.images.append(image)
+//                        }
+//
+//                    }
+//                })
+//                DispatchQueue.main.async { [weak self] in
+//                    guard let self = self else { return }
+//
+//                    self.indicator.stopAnimating()
+//                    self.collectionView.reloadData()
+                    self.assets.append(asset)
                 })
+
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self else { return }
 
@@ -89,12 +101,12 @@ class ViewController: UIViewController {
 
 extension ViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return images.count
+        return assets.count
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCollectionViewCell", for: indexPath) as! ImageCollectionViewCell
-        cell.configure(image: images[indexPath.row].image)
+        cell.configure(asset: assets[indexPath.row])
         return cell
     }
 }
@@ -112,9 +124,4 @@ extension ViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
         return 1
     }
-}
-
-struct Image {
-    let index: Int
-    let image: UIImage
 }
